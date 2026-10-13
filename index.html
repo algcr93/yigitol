@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="tr" class="h-full select-none">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Yiğitol Gıda - Kredi Kartı & Risk Takip Otomasyonu v3.3.8</title>
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3063/3063183.png" type="image/png">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        * { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; }
+        @media print {
+            body { background: white !important; color: black !important; padding: 0 !important; }
+            .no-print { display: none !important; }
+            .print-area { display: block !important; border: none !important; box-shadow: none !important; padding: 0 !important; width: 100% !important; }
+            table { page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+        }
+        .active-tab { background-color: #fee2e2 !important; border-color: #dc2626 !important; color: #991b1b !important; font-weight: 800 !important; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        body.theme-eti { background-color: #cbd5e1; }
+        body.theme-eti .app-window { background-color: #f1f5f9; border-color: #94a3b8; }
+        body.theme-eti .app-header { background-color: #b91c1c; color: #ffffff; }
+        body.theme-dark { background-color: #020617 !important; color: #f8fafc !important; }
+        body.theme-dark .app-window { background-color: #0f172a !important; border-color: #334155 !important; color: #f8fafc !important; }
+        body.theme-dark .app-panel { background-color: #1e293b !important; border-color: #334155 !important; color: #f8fafc !important; }
+        body.theme-dark .app-main-content { background-color: #0f172a !important; border-color: #334155 !important; color: #f8fafc !important; }
+        body.theme-dark input, body.theme-dark textarea { background-color: #020617 !important; color: #f8fafc !important; border-color: #475569 !important; }
+        body.theme-dark th { background-color: #020617 !important; color: #cbd5e1 !important; border-color: #334155 !important; }
+        body.theme-dark td { border-color: #334155 !important; color: #e2e8f0 !important; }
+        body.theme-dark .bg-slate-50, body.theme-dark .bg-white { background-color: #1e293b !important; color: #f8fafc !important; border-color: #334155 !important; }
+        body.theme-ocean { background-color: #bfdbfe !important; }
+        body.theme-ocean .app-window { background-color: #eff6ff !important; border-color: #60a5fa !important; }
+        body.theme-ocean .app-header { background-color: #1d4ed8 !important; color: #ffffff; }
+        body.theme-ocean .app-panel { background-color: #dbeafe !important; border-color: #93c5fd !important; }
+    </style>
+</head>
+<body class="theme-eti text-slate-800 h-screen flex flex-col p-2 overflow-hidden antialiased">
+
+    <!-- TELEFONDAN LİNK TIKLANDIĞINDA AÇILAN SAĞLAM MOBİL SAHA PANELİ -->
+    <div id="standaloneMobileView" class="hidden fixed inset-0 bg-slate-950 text-slate-100 z-[9999] p-3 overflow-y-auto flex justify-center">
+        <div class="w-full max-w-md bg-slate-900 border-2 border-slate-700 rounded-3xl p-4 shadow-2xl flex flex-col min-h-full space-y-3">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <div class="flex items-center gap-2">
+                    <span class="h-3 w-3 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span class="text-xs font-black tracking-wider uppercase text-amber-400">📱 YİĞİTOL GIDA SAHA PANELİ</span>
+                </div>
+                <button onclick="masaustuneGec()" class="text-3xs bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-2 py-1 rounded cursor-pointer">💻 Masaüstü Modu</button>
+            </div>
+            <div id="standaloneMobileContent" class="space-y-3 text-xs flex-1"></div>
+        </div>
+    </div>
+
+    <!-- MASAÜSTÜ YAZILIM ÇERÇEVESİ -->
+    <div id="desktopAppWindow" class="app-window flex-1 bg-slate-100 border-2 border-slate-400 rounded-xl shadow-2xl flex flex-col min-h-0 overflow-hidden">
+        
+        <div class="app-header bg-red-800 text-white border-b border-red-900 px-3 py-2 flex items-center justify-between text-xs font-semibold no-print shadow-sm">
+            <div class="flex items-center gap-4">
+                <div class="font-extrabold tracking-wide flex items-center gap-2 text-sm">
+                    <span>🔴 YİĞİTOL GIDA</span>
+                    <span class="text-xs font-normal opacity-80">| Kredi Kartı Risk & Tahsilat Otomasyonu v3.3.8</span>
+                </div>
+                <div class="h-4 w-px bg-white/30"></div>
+                <div class="flex items-center gap-3 text-xs">
+                    <button onclick="yeniRaporEkrani()" class="hover:text-amber-300 transition cursor-pointer flex items-center gap-1 font-bold">📄 Rapor Yükle</button>
+                    <button onclick="showDashboardView()" class="hover:text-amber-300 transition cursor-pointer flex items-center gap-1 font-bold">📊 Ekip Özeti</button>
+                    <button onclick="haftalikVadePaneliniAc()" class="hover:text-amber-300 transition cursor-pointer flex items-center gap-1 font-bold">📅 70 Günlük Vade</button>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 text-2xs font-bold bg-black/20 p-1 rounded-lg border border-white/10">
+                <span class="text-white/80 px-1">TEMA:</span>
+                <button onclick="temaDegistir('eti')" class="px-2.5 py-1 rounded bg-red-600 text-white cursor-pointer transition">Eti</button>
+                <button onclick="temaDegistir('dark')" class="px-2.5 py-1 rounded bg-slate-800 text-white cursor-pointer transition">Dark</button>
+                <button onclick="temaDegistir('ocean')" class="px-2.5 py-1 rounded bg-blue-600 text-white cursor-pointer transition">Okyanus</button>
+            </div>
+        </div>
+
+        <div class="flex-1 flex overflow-hidden p-2 gap-2">
+            
+            <aside class="w-60 app-panel bg-slate-200/80 border border-slate-300 rounded-lg p-2.5 flex flex-col shrink-0 no-print shadow-inner overflow-hidden">
+                <div class="space-y-2 mb-3">
+                    <div class="text-3xs font-extrabold text-slate-500 uppercase tracking-wider px-1">Program Modülleri</div>
+                    
+                    <button onclick="yeniRaporEkrani()" class="w-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-lg p-2.5 flex items-center gap-2.5 shadow-2xs transition cursor-pointer">
+                        <span class="text-lg">📄</span>
+                        <div class="text-left">
+                            <div class="text-xs font-bold">Rapor Yükle</div>
+                            <div class="text-3xs text-slate-400">Tahsilat & 21+ Gün Denetim</div>
+                        </div>
+                    </button>
+
+                    <button onclick="showDashboardView()" class="w-full bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-lg p-2.5 flex items-center gap-2.5 shadow-2xs transition cursor-pointer">
+                        <span class="text-lg">📊</span>
+                        <div class="text-left">
+                            <div class="text-xs font-bold">Genel Ekip Özeti</div>
+                            <div class="text-3xs text-slate-400">Konsolide Matris</div>
+                        </div>
+                    </button>
+
+                    <button onclick="haftalikVadePaneliniAc()" class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 rounded-lg p-2.5 flex items-center gap-2.5 shadow-2xs transition cursor-pointer">
+                        <span class="text-lg">📅</span>
+                        <div class="text-left">
+                            <div class="text-xs font-bold">Gün Bazlı Vade (70 Gün)</div>
+                            <div class="text-3xs text-indigo-600">8 Temsilci Raporlama</div>
+                        </div>
+                    </button>
+
+                    <div class="grid grid-cols-2 gap-1.5 pt-1">
+                        <button onclick="veriyiDiskeKaydet()" class="bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-lg p-2 flex flex-col items-center justify-center text-center shadow-2xs transition cursor-pointer">
+                            <span class="text-sm">💾</span>
+                            <span class="text-3xs font-bold mt-0.5">Kaydet</span>
+                        </button>
+                        <button onclick="dosyadanVeriYukle()" class="bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 rounded-lg p-2 flex flex-col items-center justify-center text-center shadow-2xs transition cursor-pointer">
+                            <span class="text-sm">📂</span>
+                            <span class="text-3xs font-bold mt-0.5">Yükle</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-300 pt-2.5 flex-1 flex flex-col min-h-0">
+                    <div class="text-3xs font-extrabold text-slate-600 uppercase mb-2 flex items-center justify-between px-1">
+                        <span>⚙️ TEMSİLCİ TANIMLARI</span>
+                        <span id="sideRepCountBadge" class="bg-slate-300 text-slate-800 px-1.5 py-0.5 rounded text-3xs font-mono">0</span>
+                    </div>
+                    <div class="flex gap-1 mb-2 shrink-0">
+                        <input type="text" id="yeni-temsilci-adi" placeholder="Temsilci Adı..." class="flex-1 border border-slate-300 rounded px-2 py-1 text-xs font-semibold bg-white outline-none focus:border-red-600">
+                        <button id="temsilci-ekle-btn" class="bg-slate-800 hover:bg-slate-900 text-white px-2.5 py-1 rounded text-xs font-bold transition cursor-pointer">Ekle</button>
+                    </div>
+                    
+                    <div class="flex-1 overflow-y-auto pr-1">
+                        <ul id="temsilci-yonetim-listesi" class="space-y-1"></ul>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="app-main-content flex-1 bg-white border border-slate-300 rounded-lg p-4 overflow-y-auto relative shadow-inner flex flex-col">
+                
+                <!-- HOŞGELDİNİZ EKRANI -->
+                <div id="welcomeSection" class="flex-1 flex flex-col items-center justify-center text-center p-6 select-none">
+                    <h1 class="text-2xl font-black text-slate-900 tracking-tight">YİĞİTOL GIDA LTD. ŞTİ.</h1>
+                    <p class="text-xs font-bold text-red-700 tracking-widest uppercase mt-1">Kredi Kartı Risk & Tahsilat Denetim Otomasyonu</p>
+                </div>
+
+                <!-- RAPOR YÜKLEME EKRANI (ANA KEMİK) -->
+                <section id="uploadSection" class="hidden space-y-4">
+                    <div class="border-b border-slate-200 pb-2">
+                        <h2 class="text-sm font-extrabold text-slate-800">📁 TOPLU / ÇOKLU DOSYA RAPOR GİRİŞİ</h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <div>
+                            <label class="block text-3xs font-bold text-slate-600 uppercase mb-1">Satış Temsilcisi Adı</label>
+                            <div class="relative z-[100]">
+                                <input type="text" id="temsilciInput" class="w-full bg-white border border-slate-300 rounded p-1.5 text-xs font-bold text-slate-800 focus:outline-none" placeholder="Tümü otomatik ayrışır..." autocomplete="off">
+                                <div id="temsilciDropdown" class="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded shadow-lg max-h-40 overflow-y-auto z-[100] hidden divide-y divide-slate-100 text-xs font-semibold text-slate-700"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-3xs font-bold text-slate-600 uppercase mb-1">Rapor Başlangıç</label>
+                            <input type="text" id="basTarih" class="w-full bg-white border border-slate-300 rounded p-1.5 text-xs font-medium text-slate-800" placeholder="GG.AA.YYYY">
+                        </div>
+                        <div>
+                            <label class="block text-3xs font-bold text-slate-600 uppercase mb-1">Rapor Bitiş</label>
+                            <input type="text" id="bitTarih" class="w-full bg-white border border-slate-300 rounded p-1.5 text-xs font-medium text-slate-800" placeholder="GG.AA.YYYY">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div class="flex flex-col">
+                            <label class="block text-xs font-bold text-slate-700 mb-1 uppercase">📋 Tahsilat Raporları</label>
+                            <div class="border-2 border-dashed border-slate-300 rounded-lg p-3 mb-1.5 bg-slate-50 text-center relative cursor-pointer">
+                                <input type="file" id="tahsilatFile" accept=".txt,.csv,.xlsx,.xls,.pdf" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50" onchange="window.handleTahsilatFile(this)">
+                                <div class="text-xs text-slate-600 font-bold">📁 Tahsilat Dosyası Seç</div>
+                                <div id="tahsilatFileStatus" class="text-2xs text-emerald-600 font-bold mt-1 hidden"></div>
+                            </div>
+                            <textarea id="tahsilatInput" class="w-full h-28 p-2 border border-slate-300 rounded text-2xs font-mono bg-slate-50/50"></textarea>
+                        </div>
+
+                        <div class="flex flex-col">
+                            <label class="block text-xs font-bold text-slate-700 mb-1 uppercase">📄 Vade Raporları</label>
+                            <div class="border-2 border-dashed border-slate-300 rounded-lg p-3 mb-1.5 bg-slate-50 text-center relative cursor-pointer">
+                                <input type="file" id="vadeFile" accept=".pdf,.png,.jpg,.jpeg" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50" onchange="window.handleVadeFile(this)">
+                                <div class="text-xs text-slate-600 font-bold">📄 Vade Dosyası Seç</div>
+                                <div id="vadeFileStatus" class="text-2xs text-blue-600 font-bold mt-1 hidden"></div>
+                            </div>
+                            <textarea id="vadeInput" class="w-full h-28 p-2 border border-slate-300 rounded text-2xs font-mono bg-slate-50/50"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center border-t border-slate-200 pt-3">
+                        <button onclick="analizEtVeHafizayaAl()" class="bg-red-700 hover:bg-red-800 text-white font-extrabold px-8 py-2.5 rounded-lg shadow cursor-pointer text-xs">
+                            🚀 TÜM DOSYALARI ANALİZ ET VE AYRIŞTIR
+                        </button>
+                    </div>
+                </section>
+
+                <!-- GÜN BAZLI VADE (70 GÜNLÜK RAPOR EKRANI) -->
+                <section id="haftalikVadeSection" class="hidden space-y-4">
+                    <div class="border-b border-indigo-200 pb-2 flex justify-between items-center">
+                        <h2 class="text-sm font-extrabold text-indigo-900">📅 GÜN BAZLI VADE TAKİP RAPORU (70 GÜNE KADAR - 8 TEMSİLCİ)</h2>
+                        <select id="seciliGunBazliRepSelect" onchange="secilenTemsilcininGunBazliTablosunuGoster()" class="bg-white border border-indigo-300 rounded px-2 py-1 text-xs font-bold text-indigo-900 outline-none">
+                            <option value="">-- Temsilci Seçin --</option>
+                        </select>
+                    </div>
+
+                    <div class="bg-indigo-50/60 p-3 rounded-lg border border-indigo-200 space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-bold text-indigo-900">70 Güne Kadar Olan Gün Bazlı Vade PDF'lerini/Dosyalarını Toplu Yükleyin:</span>
+                            <div class="relative cursor-pointer bg-indigo-700 hover:bg-indigo-800 text-white px-3 py-1.5 rounded text-xs font-bold shadow">
+                                <span>📄 Toplu PDF / Dosya Seç</span>
+                                <input type="file" id="yeniHaftaVadeFile" accept=".pdf,.txt,.csv" multiple class="absolute inset-0 opacity-0 cursor-pointer" onchange="window.handleYeniHaftaVadeFile(this)">
+                            </div>
+                        </div>
+                        <textarea id="yeniHaftaVadeInput" placeholder="Veya tüm temsilcilerin 70 günlük rapor metinlerini buraya yapıştırın..." class="w-full h-24 p-2 border border-indigo-300 rounded text-2xs font-mono bg-white"></textarea>
+                        <div class="flex justify-end">
+                            <button onclick="haftalikVadeRaporunuTopluIsle()" class="bg-indigo-800 hover:bg-indigo-900 text-white font-extrabold px-6 py-2 rounded shadow text-xs cursor-pointer">
+                                🚀 70 GÜNE KADAR OTOMATİK AYRIŞTIR VE ANALİZ ET
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="border border-slate-300 rounded-lg p-3 bg-white">
+                        <div class="flex justify-between items-center mb-2 pb-2 border-b border-slate-200 text-xs font-bold text-slate-700">
+                            <span id="aktifGunBazliBaslik">Aktif Temsilci Raporu: (Lütfen Temsilci Seçin veya Dosya Yükleyin)</span>
+                            <span id="aktifGunBazliSayac" class="text-indigo-600 font-mono">0 Müşteri</span>
+                        </div>
+                        <div class="overflow-x-auto max-h-96">
+                            <table class="w-full text-left text-xs border-collapse whitespace-nowrap">
+                                <thead class="sticky top-0 bg-indigo-900 text-white z-10">
+                                    <tr class="border-b border-indigo-950 text-3xs font-bold uppercase">
+                                        <th class="p-2">Cari Kod</th>
+                                        <th class="p-2">Müşteri Ünvanı</th>
+                                        <th class="p-2 text-right">Bakiye</th>
+                                        <th class="p-2 text-right">7G</th>
+                                        <th class="p-2 text-right">14G</th>
+                                        <th class="p-2 text-right text-amber-300">21G (Risk Sınırı)</th>
+                                        <th class="p-2 text-right text-red-300">28G</th>
+                                        <th class="p-2 text-right text-red-400">35G</th>
+                                        <th class="p-2 text-right text-red-500">42G</th>
+                                        <th class="p-2 text-right text-purple-400">49G</th>
+                                        <th class="p-2 text-right text-purple-500">56G</th>
+                                        <th class="p-2 text-right text-purple-600">63G</th>
+                                        <th class="p-2 text-right text-red-700 font-bold">70+G</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="haftalikVadeTableBody" class="divide-y divide-slate-200 font-medium text-slate-700">
+                                    <tr><td colspan="13" class="p-6 text-center text-slate-400 italic">Henüz 70 günlük rapor yüklenmedi veya temsilci seçilmedi.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- GENEL EKİP ÖZETİ EKRANI -->
+                <section id="dashboardSection" class="hidden space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <div class="bg-slate-50 border border-slate-300 p-3 rounded-lg">
+                            <div class="text-3xs font-bold text-slate-500 uppercase">Aktif Ekip Sayısı</div>
+                            <div class="text-xl font-black text-slate-900 mt-0.5" id="dashTotalReps">0 Temsilci</div>
+                        </div>
+                        <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg">
+                            <div class="text-3xs font-bold text-blue-600 uppercase">Toplam Brüt Ciro</div>
+                            <div class="text-xl font-black text-blue-900 mt-0.5" id="dashTotalBrut">0,00 TL</div>
+                        </div>
+                        <div class="bg-red-50 border border-red-200 p-3 rounded-lg">
+                            <div class="text-3xs font-bold text-red-600 uppercase">Saptanan Risk (21+ Gün)</div>
+                            <div class="text-xl font-black text-red-900 mt-0.5" id="dashTotalRisk">0,00 TL</div>
+                        </div>
+                        <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-lg">
+                            <div class="text-3xs font-bold text-emerald-700 uppercase">Net Temiz Ciro</div>
+                            <div class="text-xl font-black text-emerald-900 mt-0.5" id="dashTotalNet">0,00 TL</div>
+                        </div>
+                    </div>
+
+                    <div class="border border-slate-300 rounded-lg p-3 bg-white">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-100 border-b border-slate-300 text-3xs font-bold text-slate-600 uppercase">
+                                        <th class="p-2">Satış Temsilcisi</th>
+                                        <th class="p-2 text-center">İşlem Cari</th>
+                                        <th class="p-2 text-center text-red-600">İhlal Cari (21+ Gün)</th>
+                                        <th class="p-2 text-right">Brüt Tahsilat</th>
+                                        <th class="p-2 text-right text-red-600">Riskli Kart</th>
+                                        <th class="p-2 text-right text-emerald-600">Net Ciro</th>
+                                        <th class="p-2 text-center">Durum</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dashboardTableBody" class="divide-y divide-slate-200 font-medium text-slate-700"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TEKİL TEMSİLCİ DENETİM RAPORU -->
+                <section id="reportSection" class="hidden space-y-4 print-area">
+                    <div class="border-b-2 border-slate-800 pb-3 flex justify-between items-center">
+                        <div>
+                            <h2 class="text-base font-black text-slate-900">YİĞİTOL GIDA LTD. ŞTİ. - DENETİM RAPORU</h2>
+                            <div class="mt-2 text-left text-2xs text-slate-700 space-y-0.5 font-semibold">
+                                <div><span>Temsilci:</span> <span id="repRenderName" class="font-bold text-red-700">---</span> | <span>Dönem:</span> <span id="repRenderPeriod">--.--.---- - --.--.----</span></div>
+                                <div><span>Brüt Ciro:</span> <span id="repRenderBrutHeader" class="font-bold text-slate-900">0,00 ₺</span> | <span>Net Ciro:</span> <span id="repRenderNetHeader" class="font-bold text-emerald-700">0,00 ₺</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-3 border border-slate-300 rounded bg-slate-50/50 max-w-lg mx-auto font-mono text-xs">
+                        <div class="font-bold border-b border-slate-300 pb-1 mb-2 text-slate-900 text-center uppercase text-2xs">📋 HAFTALIK CİRO ÖZETİ</div>
+                        <div class="space-y-1">
+                            <div class="flex justify-between"><span>• Nakit / Havale</span><span class="font-bold text-slate-900" id="repRenderNakit">0,00 TL</span></div>
+                            <div class="flex justify-between"><span>• Kredi Kartı</span><span class="font-bold text-slate-900" id="repRenderKredi">0,00 TL</span></div>
+                            <div class="flex justify-between font-bold border-t border-dashed border-slate-300 pt-1 text-slate-900"><span>• BRÜT TOPLAM</span><span id="repRenderBrut">0,00 TL</span></div>
+                            <div class="border-t border-slate-300 my-1"></div>
+                            <div class="flex justify-between text-red-700 font-bold"><span>• 🚨 RİSKLİ KART (21+ Gün İhlal)</span><span id="repRenderRiskliKart">0,00 TL</span></div>
+                            <div class="flex justify-between text-emerald-800 font-bold text-xs bg-emerald-50 p-1 rounded border border-emerald-200 mt-1"><span>• ☑️ NET TEMİZ CİRO</span><span id="repRenderNetCiro">0,00 TL</span></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="bg-red-800 text-white p-2 rounded-t font-bold text-2xs uppercase">🔴 21+ GÜN KURAL İHLAL KAYITLARI</div>
+                        <div class="overflow-x-auto border-x border-b border-slate-300 rounded-b">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr class="bg-slate-100 border-b border-slate-300 font-bold text-slate-700 uppercase text-3xs">
+                                        <th class="p-2 border-r">Cari Kodu</th>
+                                        <th class="p-2 border-r">Müşteri Ticari Ünvanı</th>
+                                        <th class="p-2 text-center border-r">Kart Tarihi</th>
+                                        <th class="p-2 text-center border-r">Nakit Tarihi</th>
+                                        <th class="p-2 text-right border-r">21+ Gün Borç</th>
+                                        <th class="p-2 text-right border-r">Ödenen Nakit</th>
+                                        <th class="p-2 text-right text-red-700 border-r">Kalan Borç</th>
+                                        <th class="p-2 text-right text-blue-700">Çekilen Kart</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="repRenderTableBody" class="divide-y divide-slate-200 font-medium text-slate-700"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <aside class="w-52 app-panel bg-slate-200/80 border border-slate-300 rounded-lg p-2.5 flex flex-col gap-2 shrink-0 no-print shadow-inner">
+                <div class="text-3xs font-extrabold text-slate-500 uppercase tracking-wider px-1">Rapor & Çıktı Araçları</div>
+
+                <button onclick="mobilSahaGorunumuAc()" class="w-full bg-amber-700 hover:bg-amber-800 text-white rounded-lg p-2 flex items-center gap-2 shadow cursor-pointer text-xs font-bold">
+                    <span class="text-base">📱</span>
+                    <div class="text-left">
+                        <div>Mobil Saha Görünümü</div>
+                        <div class="text-3xs text-amber-200 font-normal">Haftaya 21 Güne Girecekler</div>
+                    </div>
+                </button>
+
+                <button onclick="seciliTemsilciyeMobilVadeLinkiGonder()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg p-2 flex items-center gap-2 shadow cursor-pointer text-xs font-bold">
+                    <span class="text-base">📲</span>
+                    <div class="text-left">
+                        <div>70 Günlük Vade Linki</div>
+                        <div class="text-3xs text-emerald-200 font-normal">WhatsApp İhtar Gönder</div>
+                    </div>
+                </button>
+
+                <button onclick="aktifTemsilciResmiSablonOlustur()" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white rounded-lg p-2 flex items-center gap-2 shadow cursor-pointer text-xs font-bold">
+                    <span>📄</span>
+                    <div class="text-left">
+                        <div>PDF / Antetli</div>
+                        <div class="text-3xs text-indigo-200 font-normal">Yazdır / Kaydet</div>
+                    </div>
+                </button>
+
+                <button onclick="aktifTemsilciExcelIndir()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg p-2 flex items-center gap-2 shadow cursor-pointer text-xs font-bold">
+                    <span>📥</span>
+                    <div class="text-left">
+                        <div>Excel İndir</div>
+                        <div class="text-3xs text-emerald-200 font-normal">Tablo Aktar</div>
+                    </div>
+                </button>
+
+                <button onclick="aktifTemsilciValueKopyala()" class="w-full bg-slate-700 hover:bg-slate-800 text-white rounded-lg p-2 flex items-center gap-2 shadow cursor-pointer text-xs font-bold">
+                    <span>💬</span>
+                    <div class="text-left">
+                        <div>Kısa Özet</div>
+                        <div class="text-3xs text-slate-300 font-normal">Metni Kopyala</div>
+                    </div>
+                </button>
+
+                <div class="border-t border-slate-300 pt-2 flex-1 flex flex-col min-h-0">
+                    <div class="text-3xs font-extrabold text-slate-600 uppercase mb-1 px-1">👥 YÜKLENEN TEMSİLCİLER</div>
+                    <div id="memoryList" class="space-y-1 overflow-y-auto flex-1 pr-0.5">
+                        <div id="emptyMemoryPlaceholder" class="text-3xs text-slate-400 italic p-2 text-center bg-white/50 rounded border border-dashed">Rapor yok.</div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <div class="bg-slate-800 text-slate-300 px-3 py-1.5 text-3xs font-semibold flex items-center justify-between no-print border-t border-slate-700">
+            <div>● Sistem Hazır | YİĞİTOL GIDA Otomasyon Platformu v3.3.8</div>
+            <div id="liveClock" class="font-mono">--.--.---- --:--:--</div>
+        </div>
+    </div>
+
+    <!-- MOBİL SAHA GÖRÜNÜMÜ MODAL -->
+    <div id="mobileViewModal" class="fixed inset-0 bg-black/80 z-[10000] hidden flex items-center justify-center p-4 no-print">
+        <div class="bg-slate-900 text-slate-100 w-full max-w-sm rounded-3xl p-4 shadow-2xl border-4 border-slate-700 flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3 mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="h-3 w-3 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span class="text-xs font-black tracking-wider uppercase text-amber-400">📱 MOBİL SAHA GÖRÜNÜMÜ</span>
+                </div>
+                <button onclick="document.getElementById('mobileViewModal').classList.add('hidden')" class="text-slate-400 hover:text-white font-bold text-sm bg-slate-800 px-2.5 py-1 rounded-full cursor-pointer">✕ Kapat</button>
+            </div>
+            <div id="mobileModalContent" class="flex-1 overflow-y-auto space-y-3 pr-1 text-xs"></div>
+        </div>
+    </div>
+
+    <script>
+        window.reportsMemory = JSON.parse(localStorage.getItem('reportsMemory')) || {};
+        window.activeRepKey = localStorage.getItem('activeRepKey') || null;
+        window.haftalikGunBazliReports = JSON.parse(localStorage.getItem('haftalikGunBazliReports')) || {};
+        let temsilciler = JSON.parse(localStorage.getItem('temsilciListesi')) || [
+            "HASAN ÜNALAN", "ENES KARADUMAN", "AYGÜN GARGIN", "YÜCEL APAYDIN", 
+            "ERKAN YILDIZ", "SAMET KURTGÖZ", "METİN ATEŞ", "SÜLEYMAN GÜL"
+        ];
+
+        function safeEncodeUTF8(obj) {
+            try {
+                const jsonStr = JSON.stringify(obj);
+                const bytes = new TextEncoder().encode(jsonStr);
+                let binary = '';
+                for (let i = 0; i < bytes.byteLength; i++) {
+                    binary += String.fromCharCode(bytes[i]);
+                }
+                const b64 = btoa(binary);
+                return b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+            } catch(e) { return ""; }
+        }
+
+        function safeDecodeUTF8(str) {
+            try {
+                let b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+                while (b64.length % 4) { b64 += '='; }
+                const binary = atob(b64);
+                const len = binary.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) { bytes[i] = binary.charCodeAt(i); }
+                const jsonStr = new TextDecoder().decode(bytes);
+                return JSON.parse(jsonStr);
+            } catch(e) { return null; }
+        }
+
+        function formatTR(num) { 
+            let val = Number(num);
+            if (isNaN(val)) val = 0;
+            return val.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); 
+        }
+
+        window.onload = function() {
+            try {
+                if (typeof pdfjsLib !== 'undefined') {
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+                }
+            } catch(e) {}
+
+            let sahaParam = null;
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('sahaData')) {
+                sahaParam = urlParams.get('sahaData');
+            } else if (window.location.href.includes('sahaData=')) {
+                sahaParam = window.location.href.split('sahaData=')[1].split('&')[0].split('#')[0];
+            }
+
+            if (sahaParam) {
+                const repData = safeDecodeUTF8(sahaParam);
+                if (repData) {
+                    renderStandaloneMobileView(repData);
+                    return;
+                }
+            }
+
+            const eskiTema = localStorage.getItem('seciliTema') || 'eti';
+            temaDegistir(eskiTema);
+            temsilciListeleriniGuncelle();
+            guncelleGunBazliSecimListesi();
+            updateSidebarList();
+        };
+
+        function masaustuneGec() {
+            sessionStorage.setItem('forceDesktop', 'true');
+            document.getElementById('standaloneMobileView').classList.add('hidden');
+            document.getElementById('desktopAppWindow').classList.remove('hidden');
+        }
+
+        function renderStandaloneMobileView(r) {
+            document.getElementById('desktopAppWindow').classList.add('hidden');
+            const mobileContainer = document.getElementById('standaloneMobileView');
+            const content = document.getElementById('standaloneMobileContent');
+            if (mobileContainer) mobileContainer.classList.remove('hidden');
+            if (content) content.innerHTML = buildMobileHTML(r);
+        }
+
+        function buildMobileHTML(r) {
+            const rName = r?.name || 'Temsilci';
+            const liste = r?.list || [];
+            
+            let toplamBakiye = 0;
+            let toplamRisk21 = 0;
+            liste.forEach(item => {
+                toplamBakiye += (item.bakiye || 0);
+                toplamRisk21 += (item.g21 || 0);
+            });
+
+            let html = `
+                <div class="bg-slate-800 p-3 rounded-2xl border border-slate-700 text-center shadow-lg">
+                    <div class="text-3xs text-amber-400 uppercase font-extrabold tracking-wider">📱 YİĞİTOL GIDA SAHA PANELİ</div>
+                    <div class="text-base font-black text-white mt-0.5">${rName}</div>
+                    <div class="text-3xs text-slate-400 mt-1">70 Günlük Vade & Risk Takip Raporu</div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-amber-950/60 border border-amber-900 p-2.5 rounded-xl text-center">
+                        <div class="text-3xs text-amber-400 uppercase font-bold">21 GÜN RİSK SINIRI</div>
+                        <div class="text-xs sm:text-sm font-black text-amber-200 mt-0.5">${formatTR(toplamRisk21)} ₺</div>
+                    </div>
+                    <div class="bg-emerald-950/60 border border-emerald-900 p-2.5 rounded-xl text-center">
+                        <div class="text-3xs text-emerald-400 uppercase font-bold">TOPLAM BAKİYE</div>
+                        <div class="text-xs sm:text-sm font-black text-emerald-200 mt-0.5">${formatTR(toplamBakiye)} ₺</div>
+                    </div>
+                </div>
+
+                <div class="text-3xs font-extrabold text-amber-400 uppercase tracking-wider pt-1">⚠️ TAKİP EDİLECEK RİSKLİ MÜŞTERİLER (${liste.length})</div>
+            `;
+
+            if (liste.length > 0) {
+                liste.forEach(item => {
+                    const mName = item.name;
+                    const mCode = item.code;
+                    const bakiye = item.bakiye || 0;
+                    const g21 = item.g21 || 0;
+                    const g14 = item.g14 || 0;
+
+                    let vadeMetni = "Sayın " + mName + ", Yiğitol Gıda bakiye ve vade dökümünüz:\nToplam Bakiye: " + formatTR(bakiye) + " TL\n• 14 Günlük Vade: " + formatTR(g14) + " TL\n• 21 Günlük Risk Sınırı: " + formatTR(g21) + " TL\nÖdemelerinizi rica eder, iyi çalışmalar dileriz.";
+                    const waLink = "https://api.whatsapp.com/send?text=" + encodeURIComponent(vadeMetni);
+
+                    html += `
+                        <div class="bg-slate-800/90 border border-slate-700 p-3 rounded-xl space-y-2 shadow">
+                            <div class="flex justify-between items-start border-b border-slate-700/60 pb-1.5">
+                                <div>
+                                    <span class="text-3xs font-mono bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded">${mCode}</span>
+                                    <div class="font-bold text-white text-xs mt-1">${mName}</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-xs font-black text-amber-400">${formatTR(g21)} ₺</div>
+                                    <div class="text-3xs text-slate-400">21 Gün Risk</div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between text-3xs font-mono text-slate-300 bg-slate-900/60 p-2 rounded">
+                                <div>Toplam Bakiye: <strong class="text-white">${formatTR(bakiye)} ₺</strong></div>
+                                <div>14 Gün: <strong class="text-slate-200">${formatTR(g14)} ₺</strong></div>
+                            </div>
+                            <a href="${waLink}" target="_blank" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white py-2 rounded-lg font-bold text-3xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow">
+                                💬 Müşteriye WhatsApp İhtar Gönder
+                            </a>
+                        </div>
+                    `;
+                });
+            } else {
+                html += `<div class="bg-slate-800 p-6 text-center text-slate-400 italic rounded-xl">✨ Bu temsilciye ait müşteri verisi bulunmuyor.</div>`;
+            }
+            return html;
+        }
+
+        async function handleYeniHaftaVadeFile(input) {
+            const files = input.files;
+            if (!files || files.length === 0) return;
+            let birlesikMetin = "";
+            try {
+                for (let i = 0; i < files.length; i++) {
+                    birlesikMetin += "\n" + ((files[i].type === "application/pdf" || files[i].name.endsWith('.pdf')) ? await readPdfText(files[i]) : await files[i].text());
+                }
+                document.getElementById('yeniHaftaVadeInput').value = birlesikMetin;
+                haftalikVadeRaporunuTopluIsle();
+            } catch (error) { alert("Hata: " + error.message); }
+        }
+        window.handleYeniHaftaVadeFile = handleYeniHaftaVadeFile;
+
+        async function readPdfText(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            try {
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                let fullText = "";
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    let items = textContent.items.map(item => ({ str: item.str, x: item.transform[4], y: item.transform[5] }));
+                    if (items.length === 0) continue;
+                    let linesMap = [];
+                    items.forEach(item => {
+                        let foundLine = linesMap.find(line => Math.abs(line.y - item.y) <= 4);
+                        if (foundLine) foundLine.items.push(item);
+                        else linesMap.push({ y: item.y, items: [item] });
+                    });
+                    linesMap.sort((a, b) => b.y - a.y);
+                    let pageText = "";
+                    linesMap.forEach(line => {
+                        line.items.sort((a, b) => a.x - b.x);
+                        let lineStr = line.items.map(it => it.str).join(" ").replace(/\s+/g, " ").trim();
+                        if (lineStr) pageText += lineStr + "\n";
+                    });
+                    fullText += pageText + "\n";
+                }
+                return fullText;
+            } catch (err) { return await file.text(); }
+        }
+
+        function parseTurkishFloat(str) {
+            if (!str) return 0;
+            let s = str.trim().replace(/\s/g, '');
+            if (s.includes('.') && s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+            else if (s.includes(',')) s = s.replace(',', '.');
+            const val = parseFloat(s);
+            return isNaN(val) ? 0 : val;
+        }
+
+        function splitGunBazliByRep(fullText) {
+            const repBlocks = {};
+            const lines = fullText.split(/\r?\n/);
+            let currentRep = "BİLİNMEYEN TEMSİLCİ";
+            lines.forEach(line => {
+                let trimmed = line.trim();
+                const repMatch = trimmed.match(/(?:Satış\s+Temsilcisi|Satış\s+Tem\.)\s*:\s*([A-ZÇĞİÖŞÜa-zçğıöşü\s]+)/i);
+                if (repMatch && repMatch[1].trim().length > 2) {
+                    let foundName = repMatch[1].trim().toUpperCase();
+                    const matchedKnown = temsilciler.find(t => foundName.includes(t) || t.includes(foundName));
+                    currentRep = matchedKnown ? matchedKnown : foundName;
+                } else {
+                    const matchedKnown = temsilciler.find(t => trimmed.toUpperCase() === t || trimmed.toUpperCase().includes(t));
+                    if (matchedKnown && trimmed.length < 30) {
+                        currentRep = matchedKnown;
+                    }
+                }
+                if (!repBlocks[currentRep]) repBlocks[currentRep] = [];
+                repBlocks[currentRep].push(line);
+            });
+            const result = {};
+            Object.keys(repBlocks).forEach(rep => { result[rep] = repBlocks[rep].join("\n"); });
+            return result;
+        }
+
+        function parseGunBazliVadeText(text) {
+            const customers = [];
+            const lines = text.split(/\r?\n/);
+            lines.forEach(line => {
+                const matchCode = line.match(/\b011\d{7}\b|\b800\d{7}\b|\b\d{10}\b/);
+                if (matchCode) {
+                    const code = matchCode[0];
+                    const numRegex = /\b\d{1,3}(?:[\.,]\d{3})*[\.,]\d{2}\b|\b\d+[\.,]\d{2}\b/g;
+                    const numbers = []; let m;
+                    while ((m = numRegex.exec(line)) !== null) numbers.push(parseTurkishFloat(m[0]));
+                    
+                    if (numbers.length > 0) {
+                        const bakiye = numbers[0] || 0;
+                        const g7 = numbers.length >= 2 ? numbers[1] : 0;
+                        const g14 = numbers.length >= 3 ? numbers[2] : 0;
+                        const g21 = numbers.length >= 4 ? numbers[3] : 0;
+                        const g28 = numbers.length >= 5 ? numbers[4] : 0;
+                        const g35 = numbers.length >= 6 ? numbers[5] : 0;
+                        const g42 = numbers.length >= 7 ? numbers[6] : 0;
+                        const g49 = numbers.length >= 8 ? numbers[7] : 0;
+                        const g56 = numbers.length >= 9 ? numbers[8] : 0;
+                        const g63 = numbers.length >= 10 ? numbers[9] : 0;
+                        let g70plus = 0;
+                        if (numbers.length >= 11) {
+                            for (let i = 10; i < numbers.length; i++) { g70plus += numbers[i]; }
+                        }
+
+                        let nameClean = line.replace(code, '').replace(numRegex, '').replace(/[\r\n\t|,\-]+/g, ' ').trim();
+                        const excludeKeywords = ["BAKKAL", "BÜFE", "BENZIN", "ŞARKÜTERİ", "TEKEL", "MARKET", "KIOSK", "İSTASYONU", "MÜŞTERI", "GIDA", "GENEL", "VADE", "RAPORU", "FATURA", "GÜN", "BAZLI", "TAKİP"];
+                        let nameArr = nameClean.split(' ').filter(w => !excludeKeywords.includes(w.toUpperCase()) && isNaN(w) && w.length > 1);
+                        let name = nameArr.slice(0, 4).join(' ');
+                        if (!name || name.length < 2) name = "Müşteri - " + code;
+
+                        customers.push({ code, name, bakiye, g7, g14, g21, g28, g35, g42, g49, g56, g63, g70: g70plus });
+                    }
+                }
+            });
+            return customers;
+        }
+
+        function haftalikVadeRaporunuTopluIsle() {
+            const text = document.getElementById('yeniHaftaVadeInput').value;
+            if (!text.trim()) { alert("Lütfen gün bazlı vade raporu metni veya dosyası yükleyin."); return; }
+            
+            const repBlocks = splitGunBazliByRep(text);
+            window.haftalikGunBazliReports = {};
+            let islenenRepCount = 0;
+
+            Object.keys(repBlocks).forEach(repName => {
+                if (repName === "BİLİNMEYEN TEMSİLCİ" && Object.keys(repBlocks).length > 1) return;
+                const parsedList = parseGunBazliVadeText(repBlocks[repName]);
+                if (parsedList.length > 0) {
+                    window.haftalikGunBazliReports[repName] = parsedList;
+                    islenenRepCount++;
+                }
+            });
+
+            if (islenenRepCount === 0) {
+                const parsedList = parseGunBazliVadeText(text);
+                if (parsedList.length > 0) {
+                    window.haftalikGunBazliReports["GENEL TEMSİLCİ"] = parsedList;
+                    islenenRepCount = 1;
+                }
+            }
+
+            localStorage.setItem('haftalikGunBazliReports', JSON.stringify(window.haftalikGunBazliReports));
+            guncelleGunBazliSecimListesi();
+            updateSidebarList();
+            alert("✅ Başarıyla " + islenenRepCount + " temsilcinin 70 günlük vade raporu ayrıştırıldı!");
+        }
+        window.haftalikVadeRaporunuTopluIsle = haftalikVadeRaporunuTopluIsle;
+
+        function guncelleGunBazliSecimListesi() {
+            const selectEl = document.getElementById('seciliGunBazliRepSelect');
+            if (!selectEl) return;
+            selectEl.innerHTML = '<option value="">-- Temsilci Seçin --</option>';
+            const keys = Object.keys(window.haftalikGunBazliReports);
+            keys.forEach(repName => {
+                const opt = document.createElement('option');
+                opt.value = repName;
+                opt.textContent = repName + " (" + window.haftalikGunBazliReports[repName].length + " Müşteri)";
+                selectEl.appendChild(opt);
+            });
+            if (keys.length > 0) {
+                selectEl.value = keys[0];
+                secilenTemsilcininGunBazliTablosunuGoster();
+            }
+        }
+
+        function secilenTemsilcininGunBazliTablosunuGoster() {
+            const selectEl = document.getElementById('seciliGunBazliRepSelect');
+            const tbody = document.getElementById('haftalikVadeTableBody');
+            const baslik = document.getElementById('aktifGunBazliBaslik');
+            const sayac = document.getElementById('aktifGunBazliSayac');
+            if (!selectEl || !tbody) return;
+
+            const repName = selectEl.value;
+            if (!repName || !window.haftalikGunBazliReports[repName]) {
+                tbody.innerHTML = '<tr><td colspan="13" class="p-6 text-center text-slate-400 italic">Lütfen bir temsilci seçin.</td></tr>';
+                if(baslik) baslik.innerText = "Aktif Temsilci Raporu: ---";
+                if(sayac) sayac.innerText = "0 Müşteri";
+                return;
+            }
+
+            const liste = window.haftalikGunBazliReports[repName];
+            if(baslik) baslik.innerText = "Aktif Temsilci: " + repName;
+            if(sayac) sayac.innerText = liste.length + " Müşteri";
+
+            tbody.innerHTML = "";
+            let toplamBakiye = 0, toplam7 = 0, toplam14 = 0, toplam21 = 0, toplam28 = 0, toplam35 = 0, toplam42 = 0, toplam49 = 0, toplam56 = 0, toplam63 = 0, toplam70 = 0;
+
+            liste.forEach(item => {
+                toplamBakiye += item.bakiye; toplam7 += item.g7; toplam14 += item.g14; toplam21 += item.g21; toplam28 += item.g28; toplam35 += item.g35;
+                toplam42 += item.g42; toplam49 += item.g49; toplam56 += item.g56; toplam63 += item.g63; toplam70 += item.g70;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-indigo-50/50";
+                tr.innerHTML = `
+                    <td class="p-2 font-mono">${item.code}</td>
+                    <td class="p-2 font-bold">${item.name}</td>
+                    <td class="p-2 text-right font-mono font-bold">${formatTR(item.bakiye)}</td>
+                    <td class="p-2 text-right font-mono">${formatTR(item.g7)}</td>
+                    <td class="p-2 text-right font-mono">${formatTR(item.g14)}</td>
+                    <td class="p-2 text-right font-mono text-amber-600 font-bold">${formatTR(item.g21)}</td>
+                    <td class="p-2 text-right font-mono text-red-600 font-bold">${formatTR(item.g28)}</td>
+                    <td class="p-2 text-right font-mono text-red-600">${formatTR(item.g35)}</td>
+                    <td class="p-2 text-right font-mono text-red-700">${formatTR(item.g42)}</td>
+                    <td class="p-2 text-right font-mono text-purple-600">${formatTR(item.g49)}</td>
+                    <td class="p-2 text-right font-mono text-purple-700">${formatTR(item.g56)}</td>
+                    <td class="p-2 text-right font-mono text-purple-800">${formatTR(item.g63)}</td>
+                    <td class="p-2 text-right font-mono text-red-900 font-bold">${formatTR(item.g70)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const totalTr = document.createElement('tr');
+            totalTr.className = "bg-indigo-100 font-black text-xs text-indigo-950 sticky bottom-0";
+            totalTr.innerHTML = `
+                <td colspan="2" class="p-2 text-right uppercase">TEMSİLCİ TOPLAMI:</td>
+                <td class="p-2 text-right font-mono">${formatTR(toplamBakiye)}</td>
+                <td class="p-2 text-right font-mono">${formatTR(toplam7)}</td>
+                <td class="p-2 text-right font-mono">${formatTR(toplam14)}</td>
+                <td class="p-2 text-right font-mono text-amber-700">${formatTR(toplam21)}</td>
+                <td class="p-2 text-right font-mono text-red-700">${formatTR(toplam28)}</td>
+                <td class="p-2 text-right font-mono text-red-700">${formatTR(toplam35)}</td>
+                <td class="p-2 text-right font-mono text-red-800">${formatTR(toplam42)}</td>
+                <td class="p-2 text-right font-mono text-purple-700">${formatTR(toplam49)}</td>
+                <td class="p-2 text-right font-mono text-purple-800">${formatTR(toplam56)}</td>
+                <td class="p-2 text-right font-mono text-purple-900">${formatTR(toplam63)}</td>
+                <td class="p-2 text-right font-mono text-red-950">${formatTR(toplam70)}</td>
+            `;
+            tbody.appendChild(totalTr);
+        }
+        window.secilenTemsilcininGunBazliTablosunuGoster = secilenTemsilcininGunBazliTablosunuGoster;
+
+        function updateSidebarList() {
+            const listContainer = document.getElementById('memoryList');
+            const placeholder = document.getElementById('emptyMemoryPlaceholder');
+            if (!listContainer || !placeholder) return;
+            const keys = Object.keys(window.haftalikGunBazliReports);
+            placeholder.classList.toggle('hidden', keys.length > 0);
+            listContainer.querySelectorAll('.dynamic-rep-item').forEach(el => el.remove());
+            keys.forEach(key => {
+                const liste = window.haftalikGunBazliReports[key];
+                const toplamBakiye = liste.reduce((acc, cur) => acc + cur.bakiye, 0);
+                const div = document.createElement('div');
+                div.className = 'dynamic-rep-item flex items-center justify-between p-2 rounded text-2xs font-bold cursor-pointer transition border border-slate-300 bg-white hover:bg-indigo-50 text-slate-800';
+                div.onclick = () => {
+                    const selectEl = document.getElementById('seciliGunBazliRepSelect');
+                    if(selectEl) { selectEl.value = key; secilenTemsilcininGunBazliTablosunuGoster(); }
+                };
+                div.innerHTML = `<div class="truncate"><div>${key}</div><div class="text-3xs text-slate-400 font-mono">${formatTR(toplamBakiye)} TL</div></div><span class="bg-indigo-600 text-white px-1.5 py-0.5 rounded text-3xs">${liste.length}</span>`;
+                listContainer.appendChild(div);
+            });
+        }
+
+        function haftalikVadePaneliniAc() {
+            document.getElementById('welcomeSection').classList.add('hidden');
+            document.getElementById('uploadSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('reportSection').classList.add('hidden');
+            document.getElementById('haftalikVadeSection').classList.remove('hidden');
+            guncelleGunBazliSecimListesi();
+        }
+        window.haftalikVadePaneliniAc = haftalikVadePaneliniAc;
+
+        function yeniRaporEkrani() {
+            document.getElementById('welcomeSection').classList.add('hidden');
+            document.getElementById('haftalikVadeSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('reportSection').classList.add('hidden');
+            document.getElementById('uploadSection').classList.remove('hidden');
+        }
+        window.yeniRaporEkrani = yeniRaporEkrani;
+
+        function showDashboardView() {
+            document.getElementById('welcomeSection').classList.add('hidden');
+            document.getElementById('uploadSection').classList.add('hidden');
+            document.getElementById('haftalikVadeSection').classList.add('hidden');
+            document.getElementById('reportSection').classList.add('hidden');
+            document.getElementById('dashboardSection').classList.remove('hidden');
+            renderDashboard();
+        }
+        window.showDashboardView = showDashboardView;
+
+        function renderDashboard() {
+            const keys = Object.keys(window.reportsMemory);
+            const dashTableBody = document.getElementById('dashboardTableBody');
+            if (!dashTableBody) return;
+            let totalBrut = 0, totalRisk = 0, totalNet = 0;
+            dashTableBody.innerHTML = '';
+            if (keys.length === 0) {
+                dashTableBody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 italic">Henüz rapor verisi yok.</td></tr>`;
+                return;
+            }
+            keys.forEach(key => {
+                const r = window.reportsMemory[key];
+                totalBrut += r.brutCiro; totalRisk += r.riskliKart; totalNet += r.netCiro;
+                let statusBadge = r.riskliCari > 0 ? `<span class="bg-red-100 text-red-700 px-2 py-0.5 rounded text-3xs font-bold">⚠️ ${r.riskliCari} İhlal</span>` : `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-3xs font-bold">✅ Temiz</span>`;
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 cursor-pointer";
+                tr.onclick = () => renderTemsilciRaporu(key);
+                tr.innerHTML = `<td class="p-2 font-bold">${r.name}</td><td class="p-2 text-center">${r.islemGorenCari}</td><td class="p-2 text-center text-red-600 font-semibold">${r.riskliCari}</td><td class="p-2 text-right">${formatTR(r.brutCiro)} TL</td><td class="p-2 text-right text-red-600">${formatTR(r.riskliKart)} TL</td><td class="p-2 text-right text-emerald-600">${formatTR(r.netCiro)} TL</td><td class="p-2 text-center">${statusBadge}</td>`;
+                dashTableBody.appendChild(tr);
+            });
+            document.getElementById('dashTotalReps').innerText = keys.length + " Temsilci";
+            document.getElementById('dashTotalBrut').innerText = formatTR(totalBrut) + " TL";
+            document.getElementById('dashTotalRisk').innerText = formatTR(totalRisk) + " TL";
+            document.getElementById('dashTotalNet').innerText = formatTR(totalNet) + " TL";
+        }
+
+        function mobilSahaGorunumuAc() {
+            const selectEl = document.getElementById('seciliGunBazliRepSelect');
+            if (!selectEl || !selectEl.value || !window.haftalikGunBazliReports[selectEl.value]) {
+                alert("⚠️ Lütfen önce 70 günlük vade raporu yükleyin ve bir temsilci seçin!");
+                return;
+            }
+            const repName = selectEl.value;
+            const liste = window.haftalikGunBazliReports[repName];
+            renderGunBazliMobileView({ name: repName, list: liste });
+        }
+        window.mobilSahaGorunumuAc = mobilSahaGorunumuAc;
+
+        function seciliTemsilciyeMobilVadeLinkiGonder() {
+            const selectEl = document.getElementById('seciliGunBazliRepSelect');
+            if (!selectEl || !selectEl.value) {
+                alert("⚠️ Lütfen önce bir temsilci seçin!");
+                return;
+            }
+            const repName = selectEl.value;
+            const liste = window.haftalikGunBazliReports[repName];
+            if (!liste || liste.length === 0) {
+                alert("⚠️ Seçili temsilciye ait veri bulunamadı.");
+                return;
+            }
+
+            const paketData = { type: 'gunBazliRep', name: repName, list: liste };
+            const encoded = safeEncodeUTF8(paketData);
+            
+            const fullLink = "https://algcr93.github.io/yigitol/?sahaData=" + encoded;
+            let shareText = encodeURIComponent("📱 *Yiğitol Gıda - 70 Günlük Vade Raporu* (" + repName + ")\n👇 Müşteri vadelerini ve risk durumunu incelemek için tıklayın:\n" + fullLink);
+            
+            window.open("https://api.whatsapp.com/send?text=" + shareText, '_blank');
+        }
+        window.seciliTemsilciyeMobilVadeLinkiGonder = seciliTemsilciyeMobilVadeLinkiGonder;
+
+        function renderGunBazliMobileView(dataObj) {
+            const desktopWindow = document.getElementById('desktopAppWindow');
+            const mobileContainer = document.getElementById('standaloneMobileView');
+            const content = document.getElementById('standaloneMobileContent');
+            
+            if (desktopWindow) desktopWindow.classList.add('hidden');
+            if (mobileContainer) mobileContainer.classList.remove('hidden');
+
+            const repName = dataObj?.name || 'Temsilci';
+            const liste = dataObj?.list || [];
+            
+            let toplamBakiye = 0;
+            let toplamRisk21 = 0;
+            liste.forEach(item => {
+                toplamBakiye += (item.bakiye || 0);
+                toplamRisk21 += (item.g21 || 0);
+            });
+
+            let html = `
+                <div class="bg-slate-800 p-3 rounded-2xl border border-slate-700 text-center shadow-lg">
+                    <div class="text-3xs text-amber-400 uppercase font-extrabold tracking-wider">📱 YİĞİTOL GIDA SAHA PANELİ</div>
+                    <div class="text-base font-black text-white mt-0.5">${repName}</div>
+                    <div class="text-3xs text-slate-400 mt-1">70 Günlük Vade & Risk Takip Raporu</div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-amber-950/60 border border-amber-900 p-2.5 rounded-xl text-center">
+                        <div class="text-3xs text-amber-400 uppercase font-bold">21 GÜN RİSK SINIRI</div>
+                        <div class="text-xs sm:text-sm font-black text-amber-200 mt-0.5">${formatTR(toplamRisk21)} ₺</div>
+                    </div>
+                    <div class="bg-emerald-950/60 border border-emerald-900 p-2.5 rounded-xl text-center">
+                        <div class="text-3xs text-emerald-400 uppercase font-bold">TOPLAM BAKİYE</div>
+                        <div class="text-xs sm:text-sm font-black text-emerald-200 mt-0.5">${formatTR(toplamBakiye)} ₺</div>
+                    </div>
+                </div>
+
+                <div class="text-3xs font-extrabold text-amber-400 uppercase tracking-wider pt-1">⚠️ TAKİP EDİLECEK RİSKLİ MÜŞTERİLER (${liste.length})</div>
+            `;
+
+            if (liste.length > 0) {
+                liste.forEach(item => {
+                    const mName = item.name;
+                    const mCode = item.code;
+                    const bakiye = item.bakiye || 0;
+                    const g21 = item.g21 || 0;
+                    const g14 = item.g14 || 0;
+
+                    let vadeMetni = "Sayın " + mName + ", Yiğitol Gıda bakiye ve vade dökümünüz:\nToplam Bakiye: " + formatTR(bakiye) + " TL\n• 14 Günlük Vade: " + formatTR(g14) + " TL\n• 21 Günlük Risk Sınırı: " + formatTR(g21) + " TL\nÖdemelerinizi rica eder, iyi çalışmalar dileriz.";
+                    const waLink = "https://api.whatsapp.com/send?text=" + encodeURIComponent(vadeMetni);
+
+                    html += `
+                        <div class="bg-slate-800/90 border border-slate-700 p-3 rounded-xl space-y-2 shadow">
+                            <div class="flex justify-between items-start border-b border-slate-700/60 pb-1.5">
+                                <div>
+                                    <span class="text-3xs font-mono bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded">${mCode}</span>
+                                    <div class="font-bold text-white text-xs mt-1">${mName}</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-xs font-black text-amber-400">${formatTR(g21)} ₺</div>
+                                    <div class="text-3xs text-slate-400">21 Gün Risk</div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between text-3xs font-mono text-slate-300 bg-slate-900/60 p-2 rounded">
+                                <div>Toplam Bakiye: <strong class="text-white">${formatTR(bakiye)} ₺</strong></div>
+                                <div>14 Gün: <strong class="text-slate-200">${formatTR(g14)} ₺</strong></div>
+                            </div>
+                            <a href="${waLink}" target="_blank" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white py-2 rounded-lg font-bold text-3xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow">
+                                💬 Müşteriye WhatsApp İhtar Gönder
+                            </a>
+                        </div>
+                    `;
+                });
+            } else {
+                html += `<div class="bg-slate-800 p-6 text-center text-slate-400 italic rounded-xl">✨ Bu temsilciye ait müşteri verisi bulunmuyor.</div>`;
+            }
+            if (content) content.innerHTML = html;
+        }
+
+        setInterval(() => {
+            const now = new Date();
+            const clockEl = document.getElementById('liveClock');
+            if (clockEl) clockEl.innerText = now.toLocaleDateString('tr-TR') + ' ' + now.toLocaleTimeString('tr-TR');
+        }, 1000);
+
+        function temaDegistir(tema) {
+            const body = document.body;
+            body.classList.remove('theme-eti', 'theme-dark', 'theme-ocean');
+            if(tema === 'dark') body.classList.add('theme-dark');
+            else if(tema === 'ocean') body.classList.add('theme-ocean');
+            else body.classList.add('theme-eti');
+            localStorage.setItem('seciliTema', tema);
+        }
+
+        function temsilciListeleriniGuncelle() {
+            const yonetimListesi = document.getElementById('temsilci-yonetim-listesi');
+            if (!yonetimListesi) return;
+            yonetimListesi.innerHTML = '';
+
+            temsilciler.forEach((isim, index) => {
+                let listItem = document.createElement('li');
+                listItem.className = 'flex justify-between items-center p-1.5 bg-white border border-slate-200 rounded text-2xs font-semibold hover:bg-slate-50 transition';
+                listItem.innerHTML = `<span class="font-bold text-slate-800">${isim}</span> <button onclick="temsilciSil(${index})" class="text-red-600 font-bold hover:text-red-800 cursor-pointer px-1">Sil</button>`;
+                yonetimListesi.appendChild(listItem);
+            });
+            document.getElementById('sideRepCountBadge').innerText = temsilciler.length;
+            localStorage.setItem('temsilciListesi', JSON.stringify(temsilciler));
+        }
+
+        function temsilciSil(index) { temsilciler.splice(index, 1); temsilciListeleriniGuncelle(); }
+        function yeniTemsilciEkle() {
+            const input = document.getElementById('yeni-temsilci-adi');
+            if (!input) return;
+            const yeniIsim = input.value.trim().toUpperCase();
+            if (!yeniIsim || temsilciler.includes(yeniIsim)) return;
+            temsilciler.push(yeniIsim);
+            input.value = '';
+            temsilciListeleriniGuncelle();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const ekleBtn = document.getElementById('temsilci-ekle-btn');
+            if (ekleBtn) ekleBtn.addEventListener('click', yeniTemsilciEkle);
+        });
+
+        async function veriyiDiskeKaydet() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ temsilciler, haftalikGunBazliReports: window.haftalikGunBazliReports, reportsMemory: window.reportsMemory }));
+            const a = document.createElement('a');
+            a.setAttribute("href", dataStr);
+            a.setAttribute("download", "yigitol_otomasyon_verileri.json");
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+        window.veriyiDiskeKaydet = veriyiDiskeKaydet;
+
+        function dosyadanVeriYukle() {
+            const input = document.createElement('input');
+            input.type = 'file'; input.accept = ".json";
+            input.onchange = e => {
+                const reader = new FileReader();
+                reader.onload = event => {
+                    const yuklenen = JSON.parse(event.target.result);
+                    if (yuklenen.temsilciler) temsilciler = yuklenen.temsilciler;
+                    if (yuklenen.haftalikGunBazliReports) {
+                        window.haftalikGunBazliReports = yuklenen.haftalikGunBazliReports;
+                        localStorage.setItem('haftalikGunBazliReports', JSON.stringify(window.haftalikGunBazliReports));
+                    }
+                    if (yuklenen.reportsMemory) {
+                        window.reportsMemory = yuklenen.reportsMemory;
+                        localStorage.setItem('reportsMemory', JSON.stringify(window.reportsMemory));
+                    }
+                    temsilciListeleriniGuncelle();
+                    guncelleGunBazliSecimListesi();
+                    updateSidebarList();
+                    alert("✅ Tüm veriler başarıyla yüklendi!");
+                };
+                reader.readAsText(e.target.files[0]);
+            };
+            input.click();
+        }
+        window.dosyadanVeriYukle = dosyadanVeriYukle;
+    </script>
+</body>
+</html>
